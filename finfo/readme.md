@@ -20,6 +20,9 @@
 ## インストール方法
 
 ```bash
+git clone git@github.com:riry029485439/my_work.git
+cd my_work/finfo
+gem build finfo.gemspec
 sudo gem install finfo-0.1.0.gem
 
 
