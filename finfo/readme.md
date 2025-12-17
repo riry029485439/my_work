@@ -1,6 +1,7 @@
 # finfo
 
 指定したフォルダ内のファイルの容量順に並べ替え、それらの更新日時等を表示する。そのほかにフォルダ内の重複しているファイルを検出する。
+また、オプションでファイル名(ファイルのパス)を追加することで、同じ内容のファイルを検出することができる。
 
 
 ---
@@ -13,7 +14,9 @@
 - 重複しているファイルはファイル名のみ色付きで表示
 
 - finfo  :　使い方の表示
-- finfo <folder_path>　:　実行方法　
+- finfo -h　：　ヘルプの表示
+- finfo <folder_path>　:　フォルダ内のファイルの情報を表示、重複ファイルの検出
+- finfo -d <file_path>　：　指定したファイルと同じ内容のファイルを表示
 
 ---
 
@@ -23,6 +26,6 @@
 git clone git@github.com:riry029485439/my_work.git
 cd my_work/finfo
 gem build finfo.gemspec
-sudo gem install finfo-0.1.0.gem
+sudo gem install finfo-0.1.1.gem
 
 
