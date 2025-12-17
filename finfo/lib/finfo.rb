@@ -1,71 +1,109 @@
-# lib/finfo.rb
-# 指定したフォルダ内のファイル情報を表示し、重複ファイルを検出するツール
-
+#!/usr/bin/env ruby
 require 'digest'
+require 'optparse'
 
-def run
-  # ===== 引数チェック =====
-  path = ARGV[0]
+options = {}
 
-  if path.nil? || !Dir.exist?(path)
-    puts "使い方: finfo <folder_path>"
+OptionParser.new do |opts|
+  opts.banner =
+    "使い方:\n" \
+    "  finfo <folder_path>\n" \
+    "      指定したフォルダ以下を再帰的に解析し、\n" \
+    "      ファイル一覧（サイズ順）と重複ファイルを表示します\n\n" \
+    "  finfo -d <file_path>\n" \
+    "      指定したファイルと同じ内容のファイルを検索します\n\n" \
+    "オプション:"
+
+  opts.on("-d", "--duplicate FILE", "指定ファイルと同じ内容（ハッシュ一致）のファイルを探す") do |f|
+    options[:duplicate] = f
+  end
+
+  opts.on("-h", "--help", "このヘルプを表示") do
+    puts opts
+    exit
+  end
+end.parse!
+
+
+# ===== -d オプション時 =====
+if options[:duplicate]
+  target = options[:duplicate]
+
+  unless File.file?(target)
+    puts "ファイルが存在しません: #{target}"
     exit
   end
 
-  puts "解析対象フォルダ: #{path}"
-  puts "-" * 60
+  base_dir = File.dirname(target)
+  target_hash = Digest::MD5.file(target).hexdigest
 
-  # ===== ファイル一覧取得（再帰的）=====
-  files = Dir.glob("#{path}/**/*").select { |f| File.file?(f) }
+  puts "[同一内容のファイル]"
+  files = Dir.glob("#{base_dir}/**/*").select { |f| File.file?(f) }
 
-  if files.empty?
-    puts "ファイルが見つかりませんでした"
-    exit
-  end
-
-  # ===== ファイル情報収集 =====
-  infos = files.map do |f|
-    {
-      name: File.basename(f),
-      path: f,
-      size: File.size(f),
-      mtime: File.mtime(f)
-    }
-  end
-
-  # ===== サイズ順に表示 =====
-  puts "[ファイル一覧（サイズ降順）]"
-  infos.sort_by { |i| -i[:size] }.each do |i|
-    size_kb = (i[:size] / 1024.0).round(1)
-    puts "#{i[:name].ljust(30)} #{size_kb.to_s.rjust(8)} KB  #{i[:mtime]}"
-  end
-
-  # ===== 重複ファイル検出 =====
-  puts "\n[重複ファイル]"
-  hash_map = Hash.new { |h, k| h[k] = [] }
-
-  infos.each do |i|
-    hash = Digest::MD5.file(i[:path]).hexdigest
-    hash_map[hash] << i[:path]
-  end
-
-  dup_found = false
-
-  hash_map.each_value do |paths|
-    if paths.size > 1
-      dup_found = true
-
-      paths.each do |p|
-        dir  = File.dirname(p)
-        base = File.basename(p)
-
-        # ディレクトリは通常色、ファイル名だけ緑
-        puts "#{dir}/\e[32m#{base}\e[0m"
-      end
-
-      puts "-" * 40
+  found = false
+  files.each do |f|
+    next if f == target
+    if Digest::MD5.file(f).hexdigest == target_hash
+      puts f
+      found = true
     end
   end
 
-  puts "重複ファイルは見つかりませんでした" unless dup_found
+  puts "同じ内容のファイルは見つかりませんでした" unless found
+  exit
 end
+
+# ===== 通常モード（今まで通り）=====
+path = ARGV[0]
+
+if path.nil? || !Dir.exist?(path)
+  puts "使い方:"
+  puts "  finfo -h : 詳細を表示"
+  puts "  finfo <folder_path>"
+  puts "  finfo -d <file_path>"
+  exit
+end
+
+
+puts "解析対象フォルダ: #{path}"
+puts "-" * 60
+
+files = Dir.glob("#{path}/**/*").select { |f| File.file?(f) }
+
+infos = files.map do |f|
+  {
+    name: File.basename(f),
+    path: f,
+    size: File.size(f),
+    mtime: File.mtime(f)
+  }
+end
+
+puts "[ファイル一覧（サイズ降順）]"
+infos.sort_by { |i| -i[:size] }.each do |i|
+  size_kb = (i[:size] / 1024.0).round(1)
+  puts "#{i[:name].ljust(30)} #{size_kb.to_s.rjust(8)} KB  #{i[:mtime]}"
+end
+
+puts "\n[重複ファイル]"
+hash_map = Hash.new { |h, k| h[k] = [] }
+
+infos.each do |i|
+  hash = Digest::MD5.file(i[:path]).hexdigest
+  hash_map[hash] << i[:path]
+end
+
+dup_found = false
+hash_map.each_value do |paths|
+  if paths.size > 1
+    dup_found = true
+    paths.each do |p|
+      dir  = File.dirname(p)
+      base = File.basename(p)
+      puts "#{dir}/\e[32m#{base}\e[0m"
+    end
+    puts "-" * 40
+  end
+end
+
+puts "重複ファイルは見つかりませんでした" unless dup_found

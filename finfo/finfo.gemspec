@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "finfo"
-  spec.version       = "0.1.0"
+  spec.version       = "0.1.1"
   spec.summary       = "Display file information and detect duplicate files"
   spec.author        = "ikeda"
   spec.files         = Dir["lib/**/*.rb", "bin/*"]
