@@ -3,6 +3,25 @@ require 'digest'
 require 'optparse'
 
 module Finfo
+
+  # ===== ファイルサイズを人間向けに変換 =====
+  def self.human_size(bytes)
+    units = %w[B KB MB GB TB]
+    size = bytes.to_f
+    index = 0
+
+    while size >= 1024 && index < units.size - 1
+      size /= 1024
+      index += 1
+    end
+
+    if index == 0
+      "#{size.to_i} #{units[index]}"
+    else
+      "#{size.round(1)} #{units[index]}"
+    end
+  end
+
   def self.run
     options = {}
 
@@ -139,8 +158,8 @@ module Finfo
 
     puts "[ファイル一覧（サイズ降順）]"
     infos.sort_by { |i| -i[:size] }.each do |i|
-      size_kb = (i[:size] / 1024.0).round(1)
-      puts "#{i[:name].ljust(30)} #{size_kb.to_s.rjust(8)} KB  #{i[:mtime]}"
+      size_str = Finfo.human_size(i[:size])
+      puts "#{i[:name].ljust(30)} #{size_str.rjust(10)}  #{i[:mtime]}"
     end
 
     puts "\n[重複ファイル]"
