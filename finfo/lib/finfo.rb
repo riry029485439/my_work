@@ -14,11 +14,24 @@ module Finfo
         "      ファイル一覧（サイズ順）と重複ファイルを表示します\n\n" \
         "  finfo -d <file_path>\n" \
         "      指定したファイルと同じ内容のファイルを検索します\n\n" \
+        "  finfo -u <folder_path>\n" \
+        "      重複しているファイルを更新日時の新しい順に表示します\n\n" \
         "オプション:"
 
-      opts.on("-d", "--duplicate FILE",
-              "指定ファイルと同じ内容（ハッシュ一致）のファイルを探す") do |f|
+      opts.on(
+        "-d",
+        "--duplicate FILE",
+        "指定ファイルと同じ内容（ハッシュ一致）のファイルを探す"
+      ) do |f|
         options[:duplicate] = f
+      end
+
+      opts.on(
+        "-u",
+        "--dup-updated",
+        "重複ファイルを更新日時の新しい順に表示"
+      ) do
+        options[:dup_updated] = true
       end
 
       opts.on("-h", "--help", "このヘルプを表示") do
@@ -27,7 +40,7 @@ module Finfo
       end
     end.parse!
 
-    # ===== -d オプション時 =====
+    # ===== -d オプション =====
     if options[:duplicate]
       target = options[:duplicate]
 
@@ -52,6 +65,53 @@ module Finfo
       end
 
       puts "同じ内容のファイルは見つかりませんでした" unless found
+      exit
+    end
+
+    # ===== -u オプション =====
+    if options[:dup_updated]
+      path = ARGV[0]
+
+      unless path && Dir.exist?(path)
+        puts "フォルダを指定してください。finfo -h を参照してください"
+        exit
+      end
+
+      files = Dir.glob("#{path}/**/*").select { |f| File.file?(f) }
+
+      infos = files.map do |f|
+        {
+          path: f,
+          mtime: File.mtime(f),
+          hash: Digest::MD5.file(f).hexdigest
+        }
+      end
+
+      hash_map = Hash.new { |h, k| h[k] = [] }
+      infos.each { |i| hash_map[i[:hash]] << i }
+
+      puts "[重複ファイル（更新日時順）]\n"
+
+      group_no = 1
+      found = false
+
+      hash_map.each_value do |group|
+        next if group.size < 2
+        found = true
+
+        puts "▶ グループ #{group_no}（#{group.size}ファイル）"
+
+        group
+          .sort_by { |i| -i[:mtime].to_i }
+          .each do |i|
+            puts "  #{i[:mtime]}  #{i[:path]}"
+          end
+
+        puts
+        group_no += 1
+      end
+
+      puts "重複ファイルは見つかりませんでした" unless found
       exit
     end
 
