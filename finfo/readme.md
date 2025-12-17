@@ -9,9 +9,10 @@
 ## 機能
 
 - finfo -h　：　ヘルプの表示
-- finfo <folder_path>　:　フォルダ内のファイルの情報を表示、重複ファイルの検出
-- finfo -d <file_path>　：　指定したファイルと同じ内容のファイルを表示
-- finfo -u <folder_path>　：　指定したフォルダ内で重複ファイルの出力、更新日時を追加して新しいファイルと古いファイルを識別できる
+- finfo -l <folder_path>　:　フォルダ一覧をサイズ順に表示
+- finfo -l -n N <folder_path>　：　ファイルサイズ上位N件のみ表示
+- finfo -D <folder_path>　：　重複ファイルを更新日時の新しい順に表示
+- finfo -d <file_path>　：　指定ファイルと同じ内容のファイルを検索
 
 ---
 
