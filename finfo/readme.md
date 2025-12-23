@@ -12,6 +12,7 @@
 - finfo -l -n N <folder_path>　：　ファイルサイズ上位N件のみ表示
 - finfo -D <folder_path>　：　重複ファイルを更新日時の新しい順に表示
 - finfo -d <file_path>　：　指定ファイルと同じ内容のファイルを検索
+- finfo -f file_name <folder_path>　：　指定したファイル名のパスをサイズ順に表示
 
 ---
 

@@ -17,6 +17,8 @@ module Finfo
         "      重複ファイルを更新日時の新しい順に表示\n\n" \
         "  finfo -d <file_path>\n" \
         "      指定ファイルと同じ内容のファイルを検索\n\n" \
+        "  finfo -f file_name <folder_path>\n" \
+        "      指定したファイル名のパスをサイズ順に表示\n\n" \
         "オプション:"
 
       opts.on("-l", "--list", "ファイル一覧を表示") do
@@ -33,6 +35,10 @@ module Finfo
 
       opts.on("-d FILE", "指定ファイルと同じ内容のファイルを探す") do |f|
         options[:duplicate_file] = f
+      end
+
+      opts.on("-f FILE", "指定したファイル名のパスをサイズ順に表示") do |f|
+        options[:find_name] = f
       end
 
       opts.on("-h", "--help", "このヘルプを表示") do
@@ -89,6 +95,29 @@ module Finfo
       }
     end
 
+    # ===== ファイル名検索（サイズ順）=====
+    if options[:find_name]
+      name = options[:find_name]
+
+      results = infos
+        .select { |i| i[:name] == name }
+        .sort_by { |i| -i[:size] }
+
+      if results.empty?
+        puts "該当するファイルは見つかりませんでした: #{name}"
+        exit
+      end
+
+      puts "[ファイル検索結果(サイズの大きい順): #{name}]"
+
+      results.each_with_index do |i, idx|
+        size_mb = (i[:size] / 1024.0 / 1024.0).round(2)
+        puts "#{idx + 1}.  #{i[:path]}  #{size_mb.to_s.rjust(8)} MB  #{i[:mtime]} "
+      end
+
+      exit
+    end
+
     # ===== ファイル一覧 =====
     if options[:list]
       puts "[ファイル一覧（サイズ降順）]"
@@ -131,8 +160,8 @@ module Finfo
       puts "重複ファイルは見つかりませんでした" unless found
     end
 
-    if !options[:list] && !options[:dup]
-      puts "表示する内容がありません。-l または -D を指定してください"
+    if !options[:list] && !options[:dup] && !options[:find_name]
+      puts "表示する内容がありません。-l, -D, -f のいずれかを指定してください"
     end
   end
 end
